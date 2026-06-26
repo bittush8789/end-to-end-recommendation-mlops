@@ -1,0 +1,10 @@
+train:
+  n_components: 50
+  hybrid_weight: 0.7
+  max_iter: 200
+
+feature_engineering:
+  min_interactions: 5
+
+evaluation:
+  k: 10

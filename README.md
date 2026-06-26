@@ -1,6 +1,8 @@
-# E-Commerce Recommendation Platform (ML + MLOps)
+# 🛒 E-Commerce Recommendation Platform (ML + MLOps)
 
-A production-grade, end-to-end recommendation system that serves hybrid (Collaborative Filtering SVD + Content-Based TF-IDF) product recommendations under 1 second. The project includes automated pipelines, MLOps components (MLflow, DVC), FastAPI backend endpoints, Prometheus monitoring, and a responsive frontend dashboard.
+A **production-grade, end-to-end MLOps recommendation system** that serves hybrid (Collaborative Filtering SVD + Content-Based TF-IDF) product recommendations. The platform implements a full MLOps lifecycle: automated training, model registry, Docker containerisation, Kubernetes deployment, CI/CD pipelines, and observability.
+
+---
 
 ## 🖥️ Dashboard Preview
 
@@ -8,112 +10,372 @@ A production-grade, end-to-end recommendation system that serves hybrid (Collabo
 
 ---
 
-## 🎯 Business Problem Solving & Objectives
+## 🎯 Business Problem & Solution
 
 ### The Challenge
-In modern e-commerce, platforms face several key challenges that impact revenue and retention:
-1. **Discovery Friction**: Customers struggle to find relevant products within large catalogs, leading to high bounce rates and drop-offs.
-2. **Cold Start & Engagement**: Failing to suggest relevant recommendations during browsing sessions decreases the Average Order Value (AOV) and lowers the Click-Through Rate (CTR).
-3. **Customer Retention**: Without personalization, shoppers feel unengaged and migrate to competitor platforms.
+In modern e-commerce, platforms face key challenges that impact revenue and retention:
+1. **Discovery Friction** – Customers struggle to find relevant products in large catalogs.
+2. **Cold Start & Engagement** – No personalisation reduces Average Order Value (AOV).
+3. **Customer Retention** – Without intelligent suggestions, shoppers switch to competitors.
 
 ### The ML-Powered Solution
-This platform addresses these commercial challenges through a **Hybrid Recommendation Engine**:
-- **Personalized Picks (Collaborative Filtering)**: Deconstructs historical user-item rating trends using Singular Value Decomposition (SVD). This maps similar user preferences to recommend items a user is highly likely to purchase, directly increasing **Conversion Rates**.
-- **Alternative Discoveries (Content-Based Filtering)**: Uses TF-IDF Vectorization and Cosine Similarity on product category and text details to show high-affinity alternatives. This prevents user drop-off on out-of-stock items and drives catalog exploration.
-- **Trending & High-Velocity Items**: Surfaces most viewed and best-selling products to new/unauthenticated users, resolving the cold-start problem and increasing immediate CTR.
+This platform addresses these via a **Hybrid Recommendation Engine**:
+- **Collaborative Filtering (SVD)** – Maps user-item ratings to predict high-probability purchases → increases **Conversion Rate**.
+- **Content-Based Filtering (TF-IDF + Cosine Similarity)** – Recommends similar products → prevents cart abandonment.
+- **Trending Products** – Surfaces best-sellers for cold-start users → increases **CTR**.
 
 ### Expected Business Impact
-- **Average Order Value (AOV)**: Expected increase of **12-18%** through personalized cross-selling.
-- **Conversion Rate (CR)**: Expected uplift of **5-8%** by reducing browsing path friction.
-- **Click-Through Rate (CTR)**: Expected improvement of **20%** on homepage grids using hybrid model scoring.
+| Metric | Expected Lift |
+|---|---|
+| Average Order Value (AOV) | +12–18% |
+| Conversion Rate (CR) | +5–8% |
+| Click-Through Rate (CTR) | +20% |
+
+---
+
+## 🏗️ MLOps Architecture
+
+```
+Developer
+    │
+    ▼
+GitHub Repository
+    │
+    ▼
+GitHub Actions CI/CD (9-Stage Pipeline)
+    │
+    ├── 1. Unit Tests
+    ├── 2. Data Validation
+    ├── 3. Model Training
+    ├── 4. Evaluate & Gate
+    ├── 5. Security Scan (Trivy)
+    ├── 6. Build Docker Image → ECR
+    ├── 7. Update K8s Manifests
+    ├── 8. Deploy to EKS
+    └── 9. Post-Deploy Health Check
+                │
+                ▼
+         AWS EKS Cluster
+                │
+                ▼
+     FastAPI Recommendation API
+     (3 replicas, HPA min=2 max=10)
+                │
+                ▼
+       Hybrid Recommendation Engine
+        │                       │
+    Collaborative             Content-Based
+  Filtering (SVD)         (TF-IDF + Cosine)
+                │
+                ▼
+      MLflow Model Registry
+      (PostgreSQL + S3 backend)
+                │
+                ▼
+   Prometheus → Grafana Dashboards
+   Loki → Structured JSON Logs
+   Model Monitoring (Drift Detection)
+```
 
 ---
 
 ## 📂 Project Structure
 
 ```
-ecommerce-recommendation-platform-mlops/
+ecommerce-recommendation-mlops/
 ├── api/
-│   └── app.py                      # FastAPI Backend with CORS and Prometheus metrics
-├── data/
-│   ├── products.csv                # Product catalog (automatically generated)
-│   └── user_interactions.csv       # User interaction logs (automatically generated)
+│   └── app.py                       # FastAPI + Prometheus metrics + JSON logging
 ├── src/
-│   ├── data_ingestion.py           # Loads CSV files, generates mocks if missing
-│   ├── data_validation.py          # Verifies schema, duplicates, invalid values
-│   ├── feature_engineering.py      # Computes user & product metrics
-│   ├── model_training.py           # Trains collaborative and content engines
-│   ├── model_evaluation.py         # Computes Precision@K, Recall@K, MAP, NDCG
-│   └── recommendation_engine.py    # Hybrid Recommendation Engine
-├── frontend/
-│   ├── index.html                  # Dashboard layout (Glassmorphism design)
-│   ├── style.css                   # Custom styles with gradient themes
-│   └── script.js                   # Client side API fetch integration
-├── monitoring/
-│   └── prometheus.yml              # Prometheus configuration
+│   ├── data_ingestion.py            # CSV loader + synthetic data generator
+│   ├── data_validation.py           # Schema, duplicates, rating range checks
+│   ├── feature_engineering.py       # User & product feature aggregation
+│   ├── model_training.py            # MLflow-tracked training orchestrator
+│   ├── model_evaluation.py          # Precision@K, Recall@K, MAP, NDCG
+│   ├── recommendation_engine.py     # Hybrid SVD + TF-IDF engine
+│   └── model_monitoring.py          # Data drift & prediction drift detection
 ├── pipelines/
-│   ├── training_pipeline.py        # Complete training orchestrator
-│   └── prediction_pipeline.py      # Predictor wrapper & search router
-├── artifacts/                      # Houses model.pkl, evaluation reports
+│   ├── training_pipeline.py         # End-to-end training pipeline
+│   └── prediction_pipeline.py       # Model loader & inference interface
+├── frontend/
+│   ├── index.html                   # Glassmorphism dashboard UI
+│   ├── style.css                    # Dark-mode, gradient CSS
+│   └── script.js                    # Async API fetch integration
+├── terraform/
+│   ├── backend.tf                   # Remote S3 state + DynamoDB lock
+│   ├── main.tf                      # VPC, Subnets, IGW, NAT, EKS, HPA
+│   ├── iam.tf                       # IAM roles, IRSA, node group policies
+│   ├── ecr.tf                       # ECR repository + lifecycle policy
+│   ├── s3.tf                        # MLflow S3 bucket + DVC S3 bucket
+│   ├── variables.tf                 # Input variables
+│   └── outputs.tf                   # Cluster endpoint, ECR URI, bucket names
+├── k8s/
+│   ├── namespace.yaml               # recommendation namespace
+│   ├── configmap.yaml               # App environment settings
+│   ├── secret.yaml                  # AWS credentials (template)
+│   ├── deployment.yaml              # 3 replicas, rolling update, health probes
+│   ├── service.yaml                 # ClusterIP service
+│   ├── ingress.yaml                 # NGINX ingress
+│   └── hpa.yaml                     # CPU/Memory autoscaler (min=2, max=10)
+├── docker/
+│   └── mlflow/
+│       ├── Dockerfile               # MLflow server image
+│       └── docker-compose.yml       # MLflow + PostgreSQL + S3
+├── monitoring/
+│   ├── prometheus.yml               # Scrape configs + K8s pod discovery
+│   └── grafana/
+│       ├── datasource.yml           # Prometheus + Loki datasources
+│       ├── dashboard.json           # Pre-built Grafana dashboard
+│       └── docker-compose.yml       # Prometheus + Grafana + Loki + Promtail
 ├── tests/
-│   └── test_pipelines.py           # Suite of unit tests
-├── requirements.txt                # Project dependencies
-├── dvc.yaml                        # DVC reproducible pipeline stages
-├── Dockerfile                      # Docker image specification
-└── README.md                       # Documentation
+│   └── test_pipelines.py            # Unit test suite
+├── .github/
+│   └── workflows/
+│       ├── main.yml                 # CI pipeline (test + train + Docker)
+│       └── mlops.yml                # Full 9-stage MLOps deployment pipeline
+├── Dockerfile                       # Multi-stage production image (non-root)
+├── dvc.yaml                         # DVC reproducible pipeline stages
+├── params.yaml                      # DVC hyperparameters
+└── requirements.txt                 # Python dependencies
 ```
 
-## Quick Start & Setup
+---
+
+## 🚀 Quick Start (Local)
 
 ### 1. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Execute Training Pipeline
-This command ingests data, validates schema, performs feature engineering, trains the models, evaluates them, logs metrics to MLflow, and stores the final model artifact.
+### 2. Train the Model
 ```bash
 python pipelines/training_pipeline.py
 ```
 
-### 3. Launch FastAPI Server & Frontend Dashboard
+### 3. Launch the API
 ```bash
 uvicorn api.app:app --host 0.0.0.0 --port 8000
 ```
-- **Unified Web UI Dashboard**: Visit [http://localhost:8000](http://localhost:8000) (It redirects automatically to `/frontend/index.html`).
-- **Interactive EDA Insights**: Select the **Data Insights (EDA)** tab to view real-time statistics of the catalog categories and ratings distributions.
-- **REST API Endpoints**:
-  - API Health Check: [http://localhost:8000/health](http://localhost:8000/health)
-  - Interactive Swagger Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
-  - Dataset EDA API JSON: [http://localhost:8000/eda](http://localhost:8000/eda)
-  - Prometheus Client Metrics: [http://localhost:8000/metrics](http://localhost:8000/metrics)
 
-### 4. Interactive Dashboard Features
-The dashboard runs fully inside your browser without any page reloads (using async AJAX fetches):
-- **Personalized Picks**: Select active users from **U001 to U100** to display hybrid recommendations instantly.
-- **Similarity Searches**: Click on any product card or trending row item to load alternative/similar items.
-- **Global Search**: Type inside the search bar to query products by name or category.
-- **Exploratory Data Analysis (EDA)**: Offers real-time summaries and charts showing ratings and category distributions.
+| URL | Description |
+|---|---|
+| http://localhost:8000 | Frontend Dashboard |
+| http://localhost:8000/health | Health Check |
+| http://localhost:8000/docs | Swagger API Docs |
+| http://localhost:8000/metrics | Prometheus Metrics |
+| http://localhost:8000/eda | Dataset EDA JSON |
 
+---
 
-## Docker Support
+## 🐳 Docker
 
-Build and run the entire application in a Docker container:
+### Build & Run
 ```bash
-# Build the image (automatically executes training pipeline during build)
-docker build -t ecommerce-recommendation .
-
-# Run the container exposing port 8000
-docker run -p 8000:8000 ecommerce-recommendation
+docker build -t ecommerce-recommendation:latest .
+docker run -p 8000:8000 ecommerce-recommendation:latest
 ```
 
-## Monitoring Setup (Prometheus)
-
-Configure Prometheus to scrape the FastAPI `/metrics` endpoint. In your local Prometheus installation folder, run:
+### MLflow Server (with PostgreSQL + S3)
 ```bash
-prometheus --config.file=monitoring/prometheus.yml
+cd docker/mlflow
+MLFLOW_DB_PASSWORD=yourpassword \
+AWS_ACCESS_KEY_ID=your_key \
+AWS_SECRET_ACCESS_KEY=your_secret \
+MLFLOW_S3_BUCKET=your-bucket \
+docker-compose up -d
 ```
-You can then link Grafana to the Prometheus data source to display metrics for:
-- Requests per minute (`api_requests_total`)
-- Latency (`api_request_duration_seconds`)
-- Server Resource (CPU & Memory utilization)
+MLflow UI: http://localhost:5000
+
+---
+
+## ☁️ AWS Infrastructure (Terraform)
+
+### Prerequisites
+- Terraform >= 1.5.0
+- AWS CLI configured
+- S3 bucket for Terraform state pre-created
+
+### Deploy Infrastructure
+```bash
+cd terraform
+terraform init
+terraform plan
+terraform apply
+```
+
+### Resources Created
+| Resource | Details |
+|---|---|
+| VPC | 10.0.0.0/16 with public + private subnets |
+| EKS Cluster | Kubernetes 1.29, t3.medium worker nodes |
+| ECR Repository | Image scanning enabled, 10-image lifecycle |
+| S3 (MLflow) | Versioned, AES256 encrypted |
+| S3 (DVC) | Dataset versioning storage |
+| DynamoDB | Terraform state locking |
+| IAM IRSA | Kubernetes service account role binding |
+
+---
+
+## ☸️ Kubernetes Deployment
+
+### Prerequisites
+```bash
+aws eks update-kubeconfig --name ecommerce-mlops-cluster --region us-east-1
+```
+
+### Deploy All Manifests
+```bash
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/secret.yaml       # Update secrets first!
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+kubectl apply -f k8s/ingress.yaml
+kubectl apply -f k8s/hpa.yaml
+```
+
+### Deployment Specs
+| Setting | Value |
+|---|---|
+| Replicas | 3 (rolling update) |
+| CPU Request/Limit | 250m / 500m |
+| Memory Request/Limit | 512Mi / 1Gi |
+| HPA Min/Max | 2 / 10 pods |
+| HPA CPU Target | 70% |
+| Ingress | recommendation.yourdomain.com |
+
+---
+
+## 🔄 CI/CD Pipeline (GitHub Actions)
+
+### Triggers
+- Push to `main`
+- Pull Requests to `main`
+- Manual trigger (`workflow_dispatch`)
+
+### Required GitHub Secrets
+| Secret | Description |
+|---|---|
+| `AWS_ACCESS_KEY_ID` | AWS IAM access key |
+| `AWS_SECRET_ACCESS_KEY` | AWS IAM secret key |
+| `MLFLOW_TRACKING_URI` | MLflow server URL |
+
+### Pipeline Stages
+```
+1. 🧪 Unit Tests          → pytest tests/ -v
+2. 📊 Data Validation     → src/data_validation.py
+3. 🤖 Model Training      → pipelines/training_pipeline.py
+4. 📈 Evaluate & Gate     → recall_at_k ≥ 0.03 quality gate
+5. 🔒 Security Scan       → Trivy (HIGH + CRITICAL)
+6. 🐳 Build & Push ECR    → Multi-stage Docker image
+7. 📝 Update Manifests    → Auto-update k8s/deployment.yaml
+8. 🚀 Deploy to EKS       → kubectl apply + rollout wait
+9. ✅ Health Check         → Verify ≥2 running pods
+```
+
+---
+
+## 📊 Data Versioning (DVC)
+
+### Setup S3 Remote
+```bash
+dvc init
+dvc remote add -d s3remote s3://ecommerce-mlops-dvc-storage
+dvc remote modify s3remote region us-east-1
+```
+
+### Run Full Pipeline
+```bash
+dvc repro
+```
+
+### Track Metrics
+```bash
+dvc metrics show
+dvc params diff
+```
+
+---
+
+## 📈 Monitoring
+
+### Start Monitoring Stack
+```bash
+cd monitoring/grafana
+docker-compose up -d
+```
+
+| Service | URL |
+|---|---|
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3000 (admin/admin123) |
+| Loki | http://localhost:3100 |
+
+### Grafana Dashboard Panels
+- API Request Rate (req/s)
+- API Error Rate (%)
+- P95 API Latency
+- P99 Recommendation Response Time
+- CPU Usage per Pod
+- Memory Usage per Pod (MiB)
+- Pod Restart Count
+- Total Recommendation Requests
+
+### Model Drift Monitoring
+```bash
+python src/model_monitoring.py
+```
+Outputs:
+- `artifacts/monitoring/data_drift_report.json`
+- `artifacts/monitoring/prediction_drift_report.json`
+
+---
+
+## 🔒 Security
+
+| Control | Implementation |
+|---|---|
+| Non-root container | `runAsUser: 1000` in K8s pod spec |
+| IRSA | IAM Role bound to K8s ServiceAccount via OIDC |
+| Image Scanning | ECR scan-on-push + Trivy in CI/CD |
+| Secret Management | Kubernetes Secrets (never committed to Git) |
+| Read-only filesystem | `readOnlyRootFilesystem: false` (model writes needed) |
+| Capability drop | `capabilities.drop: [ALL]` |
+
+---
+
+## 🧪 Testing
+
+```bash
+pytest tests/ -v
+```
+
+---
+
+## 📋 API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/` | Redirect to dashboard |
+| GET | `/health` | Health + model status |
+| GET | `/recommend/user/{user_id}` | Personalised recommendations |
+| GET | `/recommend/product/{product_id}` | Similar products |
+| GET | `/trending` | Trending products |
+| GET | `/eda` | Dataset statistics |
+| GET | `/metrics` | Prometheus metrics |
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit: `git commit -m "feat: your feature"`
+4. Push: `git push origin feature/your-feature`
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+MIT License — see [LICENSE](LICENSE) for details.
