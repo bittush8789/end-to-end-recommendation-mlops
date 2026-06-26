@@ -1,0 +1,27 @@
+stages:
+  ingest:
+    cmd: python src/data_ingestion.py
+    outs:
+      - data/products.csv
+      - data/user_interactions.csv
+  validate:
+    cmd: python src/data_validation.py
+    deps:
+      - data/products.csv
+      - data/user_interactions.csv
+    outs:
+      - artifacts/validation_report.json
+  train:
+    cmd: python pipelines/training_pipeline.py
+    deps:
+      - data/products.csv
+      - data/user_interactions.csv
+      - src/data_ingestion.py
+      - src/data_validation.py
+      - src/feature_engineering.py
+      - src/model_training.py
+      - src/model_evaluation.py
+      - src/recommendation_engine.py
+    outs:
+      - artifacts/model.pkl
+      - artifacts/evaluation_report.json

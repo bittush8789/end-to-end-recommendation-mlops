@@ -1,0 +1,28 @@
+{
+    "products": {
+        "missing_columns": [],
+        "row_count": 50,
+        "null_values": {
+            "product_id": 0,
+            "product_name": 0,
+            "category": 0,
+            "description": 0
+        },
+        "duplicates": 0
+    },
+    "interactions": {
+        "missing_columns": [],
+        "row_count": 2241,
+        "null_values": {
+            "user_id": 0,
+            "product_id": 0,
+            "rating": 0,
+            "purchased": 0,
+            "views": 0,
+            "clicks": 0
+        },
+        "duplicates": 0,
+        "invalid_ratings_count": 0
+    },
+    "status": "SUCCESS"
+}

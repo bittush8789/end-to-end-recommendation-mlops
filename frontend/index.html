@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VelocityRecs | E-Commerce Recommendation Platform</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style Sheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-wand-magic-sparkles logo-icon"></i>
+                <span class="logo-text">VelocityRecs</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" id="nav-home">
+                    <i class="fa-solid fa-house"></i> Dashboard Home
+                </a>
+                <a href="#" class="nav-item" id="nav-user-recs">
+                    <i class="fa-solid fa-user-gear"></i> User Recommendations
+                </a>
+                <a href="#" class="nav-item" id="nav-similar">
+                    <i class="fa-solid fa-object-group"></i> Similar Products
+                </a>
+                <a href="#" class="nav-item" id="nav-trending-page">
+                    <i class="fa-solid fa-fire"></i> Trending & Popular
+                </a>
+                <a href="#" class="nav-item" id="nav-eda">
+                    <i class="fa-solid fa-chart-simple"></i> Data Insights (EDA)
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <span class="status-indicator online"></span>
+                <span class="status-label">API Connected</span>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <div class="search-bar-container">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="global-search" placeholder="Search products by name or category...">
+                </div>
+                <div class="user-selector-container">
+                    <label for="user-id-select"><i class="fa-solid fa-circle-user"></i> Active User:</label>
+                    <select id="user-id-select">
+                        <!-- Dynamically filled with options U001-U050 -->
+                    </select>
+                </div>
+            </header>
+
+            <!-- Dashboard Sections -->
+            <div class="content-body">
+                
+                <!-- Section 1: Search Results (Hidden by default, shown when user searches) -->
+                <section id="section-search" class="results-section hidden">
+                    <div class="section-header">
+                        <h2><i class="fa-solid fa-square-poll-horizontal"></i> Search Results</h2>
+                        <button class="btn-clear" id="btn-clear-search"><i class="fa-solid fa-xmark"></i> Clear</button>
+                    </div>
+                    <div class="products-grid" id="search-grid"></div>
+                </section>
+
+                <!-- Section 2: Personalized User Recommendations -->
+                <section id="section-user-recs" class="results-section">
+                    <div class="section-header">
+                        <div>
+                            <h2><i class="fa-solid fa-sparkles text-gradient"></i> Personalized Picks for You</h2>
+                            <p class="section-subtitle">Based on your ratings, purchase history, and similarity with other shoppers.</p>
+                        </div>
+                        <span class="badge">Hybrid SVD + TF-IDF</span>
+                    </div>
+                    <div class="products-grid" id="user-recs-grid">
+                        <!-- Dynamic Card Insertion -->
+                    </div>
+                </section>
+
+                <!-- Section 3: Similar Products (Triggers when clicking on any product card) -->
+                <section id="section-similar" class="results-section">
+                    <div class="section-header">
+                        <div>
+                            <h2><i class="fa-solid fa-link text-gradient"></i> Similar & Alternative Items</h2>
+                            <p class="section-subtitle" id="similar-subtitle">Select a product card to explore similar items</p>
+                        </div>
+                    </div>
+                    <div class="products-grid" id="similar-grid">
+                        <div class="empty-state">
+                            <i class="fa-solid fa-hand-pointer"></i>
+                            <p>Click on any product card in the dashboard to load alternatives & matches instantly!</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 4: Trending and Popular -->
+                <section id="section-trending" class="results-section">
+                    <div class="trending-container">
+                         <!-- Most Purchased column -->
+                        <div class="trending-column">
+                            <div class="section-header">
+                                <h2><i class="fa-solid fa-bag-shopping text-gradient-orange"></i> Best Sellers</h2>
+                            </div>
+                            <div class="trending-list" id="trending-purchased-list"></div>
+                        </div>
+
+                        <!-- Most Viewed column -->
+                        <div class="trending-column">
+                            <div class="section-header">
+                                <h2><i class="fa-solid fa-chart-line text-gradient-cyan"></i> Most Viewed</h2>
+                            </div>
+                            <div class="trending-list" id="trending-viewed-list"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 5: Exploratory Data Analysis (EDA) -->
+                <section id="section-eda" class="results-section">
+                    <div class="section-header">
+                        <div>
+                            <h2><i class="fa-solid fa-chart-pie text-gradient"></i> Exploratory Data Analysis (EDA)</h2>
+                            <p class="section-subtitle">Real-time statistics and interaction metrics of the active recommendation catalog.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="eda-metrics-grid" id="eda-summary-stats">
+                        <!-- Filled dynamically -->
+                    </div>
+
+                    <div class="eda-visual-row">
+                        <div class="eda-chart-card">
+                            <h3><i class="fa-solid fa-star text-gradient-orange"></i> Ratings Distribution</h3>
+                            <div class="eda-chart-content" id="eda-ratings-chart"></div>
+                        </div>
+                        <div class="eda-chart-card">
+                            <h3><i class="fa-solid fa-layer-group text-gradient-cyan"></i> Categories Split</h3>
+                            <div class="eda-chart-content" id="eda-categories-chart"></div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+    
+    <!-- Modal for Detailed Product View (Optional enhancement for rich aesthetics) -->
+    <div class="modal hidden" id="product-modal">
+        <div class="modal-content">
+            <span class="modal-close" id="modal-close-btn">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Script File -->
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+name: E-Commerce Recommendation CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        cache: 'pip'
+
+    - name: Install Dependencies
+      run: |
+        python -ms pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run Unit Tests
+      run: |
+        pytest tests/
+
+    - name: Run ML Training Pipeline
+      run: |
+        python pipelines/training_pipeline.py
+
+    - name: Build Docker Image
+      run: |
+        docker build -t ecommerce-recommendation:latest .

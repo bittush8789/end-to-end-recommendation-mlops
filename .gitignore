@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+mlruns/
+test_data_temp/
+test_artifacts_temp/
+artifacts/model.pkl
+.dvc/tmp/
+.dvc/cache/
+.ipynb_checkpoints/
