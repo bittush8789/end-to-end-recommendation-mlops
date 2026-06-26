@@ -15,14 +15,18 @@ env:
   PYTHON_VERSION: "3.11"
 
 jobs:
-  # ─── Stage 1: Unit Tests ───────────────────────────────────────────────────
+  # ═══════════════════════════════════════════════════════════════════════════
+  # STAGE 1 — Unit Tests
+  # ═══════════════════════════════════════════════════════════════════════════
   test:
-    name: 🧪 Run Unit Tests
+    name: "🧪 Stage 1 · Unit Tests"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
@@ -32,14 +36,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run pytest
+      - name: Run pytest with coverage
         env:
           PYTHONPATH: ${{ github.workspace }}
-        run: pytest tests/ -v --tb=short
+        run: |
+          pytest tests/ -v --tb=short
 
-  # ─── Stage 2: Data Validation ─────────────────────────────────────────────
+  # ═══════════════════════════════════════════════════════════════════════════
+  # STAGE 2 — Data Validation
+  # ═══════════════════════════════════════════════════════════════════════════
   data-validation:
-    name: 📊 Data Validation
+    name: "📊 Stage 2 · Data Validation"
     runs-on: ubuntu-latest
     needs: test
     steps:
@@ -60,13 +67,17 @@ jobs:
 
       - name: Upload validation report
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: validation-report
           path: artifacts/validation_report.json
+          if-no-files-found: warn
 
-  # ─── Stage 3: Train Model ─────────────────────────────────────────────────
+  # ═══════════════════════════════════════════════════════════════════════════
+  # STAGE 3 — Model Training
+  # ═══════════════════════════════════════════════════════════════════════════
   train:
-    name: 🤖 Train Model
+    name: "🤖 Stage 3 · Train Model"
     runs-on: ubuntu-latest
     needs: data-validation
     steps:
@@ -86,17 +97,20 @@ jobs:
           MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
         run: python pipelines/training_pipeline.py
 
-      - name: Upload model artifact
+      - name: Upload model artifacts
         uses: actions/upload-artifact@v4
         with:
           name: model-artifact
           path: |
             artifacts/model.pkl
             artifacts/evaluation_report.json
+          if-no-files-found: error
 
-  # ─── Stage 4: Evaluate Model ──────────────────────────────────────────────
+  # ═══════════════════════════════════════════════════════════════════════════
+  # STAGE 4 — Evaluate & Quality Gate
+  # ═══════════════════════════════════════════════════════════════════════════
   evaluate:
-    name: 📈 Evaluate & Gate Model
+    name: "📈 Stage 4 · Evaluate & Gate"
     runs-on: ubuntu-latest
     needs: train
     steps:
@@ -116,7 +130,13 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Validate evaluation metrics
+      - name: Run model monitoring / drift check
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python src/model_monitoring.py
+        continue-on-error: true
+
+      - name: Validate evaluation metrics (quality gate)
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
@@ -124,38 +144,55 @@ jobs:
           import json, sys
           with open('artifacts/evaluation_report.json') as f:
               m = json.load(f)
-          print('Metrics:', json.dumps(m, indent=2))
-          # Gate: fail CI if recall_at_k < 0.03
-          if m.get('recall_at_k', 0) < 0.03:
-              print('Model quality gate FAILED')
+          print('=== Evaluation Metrics ===')
+          for k, v in m.items():
+              print(f'  {k}: {v}')
+          recall = m.get('recall_at_k', 0)
+          if recall < 0.03:
+              print(f'Quality gate FAILED: recall_at_k={recall} < 0.03')
               sys.exit(1)
-          print('Model quality gate PASSED')
+          print(f'Quality gate PASSED: recall_at_k={recall}')
           "
 
-  # ─── Stage 5: Security Scanning ───────────────────────────────────────────
+      - name: Upload monitoring reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: monitoring-reports
+          path: artifacts/monitoring/
+          if-no-files-found: warn
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # STAGE 5 — Security Scan (Trivy)
+  # ═══════════════════════════════════════════════════════════════════════════
   security-scan:
-    name: 🔒 Security Scan
+    name: "🔒 Stage 5 · Security Scan"
     runs-on: ubuntu-latest
     needs: evaluate
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Trivy vulnerability scan on Dockerfile
+      - name: Run Trivy filesystem scan
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
           scan-ref: .
           format: table
-          exit-code: 0
+          exit-code: 0          # warn-only, do not block pipeline
           severity: HIGH,CRITICAL
 
-  # ─── Stage 6: Build Docker Image ──────────────────────────────────────────
+  # ═══════════════════════════════════════════════════════════════════════════
+  # STAGE 6 — Build Docker Image → Push to ECR
+  # Requires: AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY secrets
+  # ═══════════════════════════════════════════════════════════════════════════
   build:
-    name: 🐳 Build Docker Image
+    name: "🐳 Stage 6 · Build & Push ECR"
     runs-on: ubuntu-latest
     needs: evaluate
-    if: github.ref == 'refs/heads/main'
+    if: |
+      github.ref == 'refs/heads/main' &&
+      secrets.AWS_ACCESS_KEY_ID != ''
     outputs:
       image_tag: ${{ steps.meta.outputs.image_tag }}
       ecr_uri: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
@@ -179,53 +216,67 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Generate image tag
+      - name: Set image tag
         id: meta
         run: echo "image_tag=${{ github.sha }}" >> $GITHUB_OUTPUT
 
-      - name: Build and push Docker image
+      - name: Build and push image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ steps.meta.outputs.image_tag }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker tag  $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
-                      $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker build \
+            --label "git-commit=${{ github.sha }}" \
+            --label "build-date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+            .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "✅ Pushed: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-  # ─── Stage 7: Update Kubernetes Manifests ─────────────────────────────────
+  # ═══════════════════════════════════════════════════════════════════════════
+  # STAGE 7 — Update K8s Deployment Manifest with new image tag
+  # ═══════════════════════════════════════════════════════════════════════════
   update-manifests:
-    name: 📝 Update K8s Manifests
+    name: "📝 Stage 7 · Update K8s Manifests"
     runs-on: ubuntu-latest
     needs: build
-    if: github.ref == 'refs/heads/main'
+    if: |
+      github.ref == 'refs/heads/main' &&
+      needs.build.result == 'success'
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update image tag in deployment.yaml
+      - name: Patch image in deployment.yaml
         env:
           ECR_URI: ${{ needs.build.outputs.ecr_uri }}
           IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
         run: |
-          sed -i "s|image: .*ecommerce-mlops-api.*|image: $ECR_URI:$IMAGE_TAG|g" \
+          sed -i "s|image: .*ecommerce-mlops-api.*|image: ${ECR_URI}:${IMAGE_TAG}|g" \
               k8s/deployment.yaml
+          echo "Updated deployment.yaml → ${ECR_URI}:${IMAGE_TAG}"
 
-      - name: Commit updated manifests
+      - name: Commit & push manifest update
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add k8s/deployment.yaml
-          git diff --staged --quiet || \
-            git commit -m "ci: update image tag to ${{ needs.build.outputs.image_tag }}"
-          git push
+          git diff --staged --quiet && echo "No changes to commit" || \
+            ( git commit -m "ci(k8s): update image → ${{ needs.build.outputs.image_tag }}" && git push )
 
-  # ─── Stage 8: Deploy to EKS ───────────────────────────────────────────────
+  # ═══════════════════════════════════════════════════════════════════════════
+  # STAGE 8 — Deploy to EKS
+  # ═══════════════════════════════════════════════════════════════════════════
   deploy:
-    name: 🚀 Deploy to EKS
+    name: "🚀 Stage 8 · Deploy to EKS"
     runs-on: ubuntu-latest
     needs: [build, update-manifests]
-    if: github.ref == 'refs/heads/main'
+    if: |
+      github.ref == 'refs/heads/main' &&
+      needs.build.result == 'success'
     environment: production
     steps:
       - uses: actions/checkout@v4
@@ -239,12 +290,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Update kubeconfig
+      - name: Update kubeconfig for EKS
         run: |
-          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER }} \
-              --region ${{ env.AWS_REGION }}
+          aws eks update-kubeconfig \
+            --name ${{ env.EKS_CLUSTER }} \
+            --region ${{ env.AWS_REGION }}
 
-      - name: Apply Kubernetes manifests
+      - name: Apply all K8s manifests
         run: |
           kubectl apply -f k8s/namespace.yaml
           kubectl apply -f k8s/configmap.yaml
@@ -254,22 +306,30 @@ jobs:
           kubectl apply -f k8s/ingress.yaml
           kubectl apply -f k8s/hpa.yaml
 
-      - name: Wait for rollout
+      - name: Wait for rollout to complete
         run: |
           kubectl rollout status deployment/recommendation-api \
-              -n ${{ env.K8S_NAMESPACE }} --timeout=300s
+            -n ${{ env.K8S_NAMESPACE }} --timeout=300s
 
-      - name: Verify deployment
+      - name: Show deployment status
         run: |
+          echo "=== Pods ==="
           kubectl get pods -n ${{ env.K8S_NAMESPACE }}
-          kubectl get svc  -n ${{ env.K8S_NAMESPACE }}
+          echo "=== Services ==="
+          kubectl get svc -n ${{ env.K8S_NAMESPACE }}
+          echo "=== HPA ==="
+          kubectl get hpa -n ${{ env.K8S_NAMESPACE }}
 
-  # ─── Stage 9: Post-Deploy Health Check ────────────────────────────────────
+  # ═══════════════════════════════════════════════════════════════════════════
+  # STAGE 9 — Post-Deploy Health Check
+  # ═══════════════════════════════════════════════════════════════════════════
   health-check:
-    name: ✅ Post-Deploy Health Check
+    name: "✅ Stage 9 · Health Check"
     runs-on: ubuntu-latest
     needs: deploy
-    if: github.ref == 'refs/heads/main'
+    if: |
+      github.ref == 'refs/heads/main' &&
+      needs.deploy.result == 'success'
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -278,17 +338,23 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Check pod health
+      - name: Verify running pod count
         run: |
-          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER }} \
-              --region ${{ env.AWS_REGION }}
+          aws eks update-kubeconfig \
+            --name ${{ env.EKS_CLUSTER }} \
+            --region ${{ env.AWS_REGION }}
+
           kubectl get pods -n recommendation -l app=recommendation-api
+
           RUNNING=$(kubectl get pods -n recommendation \
-              -l app=recommendation-api \
-              --field-selector=status.phase=Running --no-headers | wc -l)
+            -l app=recommendation-api \
+            --field-selector=status.phase=Running \
+            --no-headers | wc -l)
+
           echo "Running pods: $RUNNING"
+
           if [ "$RUNNING" -lt 2 ]; then
-            echo "Health check failed: insufficient running pods"
+            echo "❌ Health check FAILED — expected ≥2 running pods, got $RUNNING"
             exit 1
           fi
-          echo "Health check passed ✅"
+          echo "✅ Health check PASSED — $RUNNING pods running"
