@@ -2,6 +2,10 @@
 
 A production-grade, end-to-end recommendation system that serves hybrid (Collaborative Filtering SVD + Content-Based TF-IDF) product recommendations under 1 second. The project includes automated pipelines, MLOps components (MLflow, DVC), FastAPI backend endpoints, Prometheus monitoring, and a responsive frontend dashboard.
 
+## 🖥️ Dashboard Preview
+
+![VelocityRecs Dashboard Preview](photo/image.png)
+
 ---
 
 ## 🎯 Business Problem Solving & Objectives
