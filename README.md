@@ -1,6 +1,6 @@
 # E-Commerce Recommendation Platform (ML + MLOps)
 
-A production-grade, end-to-end recommendation system that serves hybrid (Collaborative Filtering SVD + Content-Based TF-IDF) product recommendations under 1 second. The project includes automated pipelines, MLOps components (MLflow, DVC), FastAPI backend endpoints, Prometheus monitoring, and a responsive frontend dashboard.
+A production‑grade, end‑to‑end recommendation system that serves hybrid (Collaborative Filtering SVD + Content‑Based TF‑IDF) product recommendations under 1 second. The project includes automated pipelines, MLOps components (MLflow, DVC), FastAPI backend endpoints, Prometheus monitoring, and a responsive frontend dashboard.
 
 ## 🖥️ Dashboard Preview
 
@@ -11,56 +11,66 @@ A production-grade, end-to-end recommendation system that serves hybrid (Collabo
 ## 🎯 Business Problem Solving & Objectives
 
 ### The Challenge
-In modern e-commerce, platforms face several key challenges that impact revenue and retention:
-1. **Discovery Friction**: Customers struggle to find relevant products within large catalogs, leading to high bounce rates and drop-offs.
-2. **Cold Start & Engagement**: Failing to suggest relevant recommendations during browsing sessions decreases the Average Order Value (AOV) and lowers the Click-Through Rate (CTR).
-3. **Customer Retention**: Without personalization, shoppers feel unengaged and migrate to competitor platforms.
+In modern e‑commerce, platforms face several key challenges that impact revenue and retention:
+1. **Discovery Friction** – customers struggle to find relevant products within large catalogs, leading to high bounce rates.
+2. **Cold‑Start & Engagement** – missing recommendations during browsing decreases Average Order Value (AOV) and Click‑Through Rate (CTR).
+3. **Customer Retention** – without personalization shoppers migrate to competitors.
 
-### The ML-Powered Solution
-This platform addresses these commercial challenges through a **Hybrid Recommendation Engine**:
-- **Personalized Picks (Collaborative Filtering)**: Deconstructs historical user-item rating trends using Singular Value Decomposition (SVD). This maps similar user preferences to recommend items a user is highly likely to purchase, directly increasing **Conversion Rates**.
-- **Alternative Discoveries (Content-Based Filtering)**: Uses TF-IDF Vectorization and Cosine Similarity on product category and text details to show high‑affinity alternatives. This prevents user drop‑off on out‑of‑stock items and drives catalog exploration.
-- **Trending & High‑Velocity Items**: Surfaces most viewed and best‑selling products to new/unauthenticated users, resolving the cold‑start problem and increasing immediate CTR.
+### The ML‑Powered Solution
+This platform addresses these challenges through a **Hybrid Recommendation Engine**:
+- **Personalized Picks (Collaborative Filtering)** – SVD on historical user‑item interactions to surface items a user is highly likely to purchase.
+- **Alternative Discoveries (Content‑Based Filtering)** – TF‑IDF + Cosine Similarity on product descriptions to suggest similar items.
+- **Trending & High‑Velocity Items** – surfacing most viewed / best‑selling products for cold‑start users.
 
 ### Expected Business Impact
-- **Average Order Value (AOV)**: Expected increase of **12‑18%** through personalized cross‑selling.
-- **Conversion Rate (CR)**: Expected uplift of **5‑8%** by reducing browsing path friction.
-- **Click‑Through Rate (CTR)**: Expected improvement of **20%** on homepage grids using hybrid model scoring.
+- **AOV** + 12‑18 % via cross‑selling.
+- **Conversion Rate** + 5‑8 % by reducing browsing friction.
+- **CTR** + 20 % on homepage grids using hybrid scoring.
 
 ---
 
-## 📂 Project Structure
+## 📁 MLOps Folder Structure
 
-```
-ecommerce-recommendation-platform-mlops/
-├── api/
-│   └── app.py                      # FastAPI Backend with CORS and Prometheus metrics
-├── data/
-│   ├── products.csv                # Product catalog (automatically generated)
-│   └── user_interactions.csv       # User interaction logs (automatically generated)
-├── src/
-│   ├── data_ingestion.py           # Loads CSV files, generates mocks if missing
-│   ├── data_validation.py          # Verifies schema, duplicates, invalid values
-│   ├── feature_engineering.py      # Computes user \& product metrics
-│   ├── model_training.py           # Trains collaborative and content engines
-│   ├── model_evaluation.py         # Computes Precision@K, Recall@K, MAP, NDCG
-│   └── recommendation_engine.py    # Hybrid Recommendation Engine
-├── frontend/
-│   ├── index.html                  # Dashboard layout (Glassmorphism design)
-│   ├── style.css                   # Custom styles with gradient themes
-│   └── script.js                   # Client side API fetch integration
-├── monitoring/
-│   └── prometheus.yml              # Prometheus configuration
-├── pipelines/
-│   ├── training_pipeline.py        # Complete training orchestrator
-│   └── prediction_pipeline.py      # Predictor wrapper \& search router
-├── artifacts/                      # Houses model.pkl, evaluation reports
-├── tests/
-│   └── test_pipelines.py           # Suite of unit tests
-├── requirements.txt                # Project dependencies
-├── dvc.yaml                        # DVC reproducible pipeline stages
-├── Dockerfile                      # Docker image specification
-└── README.md                       # Documentation
+Below is the recommended folder layout for a production‑grade MLOps recommendation system. Each top‑level directory groups related concerns (code, infrastructure, data, monitoring, CI/CD).
+
+```text
+recommendation-system/
+├── api/                     # FastAPI service (model inference API)
+│   └── app.py
+├── data/                    # Raw / generated datasets
+│   ├── products.csv
+│   └── user_interactions.csv
+├── src/                     # Core ML pipeline code
+│   ├── data_ingestion.py
+│   ├── data_validation.py
+│   ├── feature_engineering.py
+│   ├── model_training.py
+│   ├── model_evaluation.py
+│   └── recommendation_engine.py
+├── pipelines/               # Kubeflow pipelines / orchestration scripts
+│   ├── training_pipeline.py
+│   └── prediction_pipeline.py
+├── monitoring/              # Prometheus & Grafana configs
+│   └── prometheus.yml
+├── terraform/               # IaC for AWS resources (ECR, EKS, IAM)
+│   └── ecr.tf
+├── k8s/                     # Kubernetes manifests for FastAPI & HPA
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   ├── ingress.yaml
+│   ├── configmap.yaml
+│   └── namespace.yaml
+├── kserve/                  # Model serving via KServe
+│   └── inferenceservice.yaml
+├── argocd/                  # GitOps deployment via Argo CD
+│   ├── install.yaml
+│   └── namespace.yaml
+├── mlflow/                  # MLflow server scripts & configs
+│   └── mlflow_server.sh
+├── dvc.yaml                 # Data & model versioning pipeline
+├── Dockerfile               # Container image definition for FastAPI
+├── requirements.txt         # Python dependencies
+└── README.md                # Project documentation (this file)
 ```
 
 ## Quick Start & Setup
@@ -70,81 +80,234 @@ ecommerce-recommendation-platform-mlops/
 pip install -r requirements.txt
 ```
 
-### 2. Execute Training Pipeline
-This command ingests data, validates schema, performs feature engineering, trains the models, evaluates them, logs metrics to MLflow, and stores the final model artifact.
+### 2. Run the Training Pipeline
 ```bash
 python pipelines/training_pipeline.py
 ```
+This script performs data ingestion, validation, feature engineering, model training, evaluation, and logs everything to **MLflow** and **DVC**.
 
-### 3. Launch FastAPI Server & Frontend Dashboard
+### 3. Launch FastAPI & Frontend
 ```bash
 uvicorn api.app:app --host 0.0.0.0 --port 8000
 ```
-- **Unified Web UI Dashboard**: Visit [http://localhost:8000](http://localhost:8000)
-- **Interactive EDA Insights**: Select the **Data Insights (EDA)** tab to view real‑time statistics.
-- **REST API Endpoints**:
-  - API Health Check: [http://localhost:8000/health](http://localhost:8000/health)
-  - Interactive Swagger Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
-  - Dataset EDA API JSON: [http://localhost:8000/eda](http://localhost:8000/eda)
-  - Prometheus Client Metrics: [http://localhost:8000/metrics](http://localhost:8000/metrics)
-
-### 4. Interactive Dashboard Features
-- **Personalized Picks**: Select active users from **U001 to U100** to display hybrid recommendations instantly.
-- **Similarity Searches**: Click on any product card or trending row item to load alternative/similar items.
-- **Global Search**: Type inside the search bar to query products by name or category.
-- **Exploratory Data Analysis (EDA)**: Offers real‑time summaries and charts showing ratings and category distributions.
+- UI: <http://localhost:8000>
+- Swagger docs: <http://localhost:8000/docs>
+- Prometheus metrics: <http://localhost:8000/metrics>
 
 ## Docker Support
-
-Build and run the entire application in a Docker container:
 ```bash
 # Build the image
 docker build -t ecommerce-recommendation .
 
-# Run the container exposing port 8000
+# Run the container (exposes FastAPI on port 8000)
 docker run -p 8000:8000 ecommerce-recommendation
 ```
 
-## Monitoring Setup (Prometheus)
-
-Configure Prometheus to scrape the FastAPI `/metrics` endpoint:
+## Monitoring (Prometheus + Grafana)
 ```bash
 prometheus --config.file=monitoring/prometheus.yml
 ```
-You can then link Grafana to the Prometheus data source to display metrics for:
-- Requests per minute (`api_requests_total`)
-- Latency (`api_request_duration_seconds`)
-- Server Resource (CPU & Memory utilization)
+Configure Grafana to use the Prometheus data source and import the provided dashboards (found in `monitoring/grafana/`).
 
 ## CI/CD Pipeline (GitHub Actions)
-
-The `.github/workflows/main.yml` pipeline runs on every push to `main`:
+The `.github/workflows/main.yml` pipeline runs on every push to **`cicd`**:
 1. ✅ Run unit tests
-2. 📊 Data validation
-3. 🤖 Train model
-4. 🐳 Build Docker image
+2. 📊 Data validation (DVC pull & checksum verification)
+3. 🤖 Model training & evaluation (MLflow tracking)
+4. 🐳 Build & push Docker image to **ECR**
+5. 📦 Deploy manifests to **EKS** (kubectl apply)
+6. 🚀 Deploy model via **KServe**
+7. 📈 Sync Argo CD for GitOps continuous delivery
 
-## 🛠️ Tools & Step‑by‑Step Usage
+---
 
-Below is a quick reference for each major tool used in this project and the commands you need to run locally.
+## 🛠️ Tools & Step‑by‑Step Usage (Industry‑Standard)
+Below is a detailed guide for each tool used in this MLOps stack, detailing the exact commands to run and how to use them in the lifecycle.
 
-| Tool | Purpose | Quick Commands |
-|------|---------|----------------|
-| **FastAPI** | Serve recommendation API | `uvicorn api.app:app --host 0.0.0.0 --port 8000` |
-| **Python** | Core language | `pip install -r requirements.txt` |
-| **Scikit‑Learn / LightFM** | Model training & evaluation | `python pipelines/training_pipeline.py` |
-| **MLflow** | Experiment tracking & model registry | `mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root s3://my-mlflow-bucket` |
-| **DVC** | Data & model versioning | `dvc pull` → `dvc push` → `dvc repro` |
-| **Docker** | Containerise FastAPI service | `docker build -t ecommerce-recommendation .` |
-| **Kubernetes** | Deploy containers to EKS | `kubectl apply -f k8s/` |
-| **KServe** | Serve the trained model on K8s | `kubectl apply -f kserve/inferenceservice.yaml` |
-| **Kubeflow Pipelines** | Orchestrate training workflow | `pip install kfp && python kubeflow/pipeline.py` |
-| **GitHub Actions** | CI/CD automation | See `.github/workflows/main.yml` |
-| **AWS EKS** | Managed K8s cluster | `aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER` |
-| **Prometheus** | Metrics collection | `prometheus --config.file=monitoring/prometheus.yml` |
-| **Grafana** | Dashboard visualisation | Access Grafana service (LoadBalancer) |
-| **Evidently AI** | Data & model drift monitoring | `python src/model_monitoring.py` |
-| **Argo CD** | GitOps continuous delivery | `kubectl apply -f argocd/install.yaml` |
+### 1. FastAPI
+* **Purpose**: Serves model predictions and metrics via REST endpoints.
+* **How to use it**:
+  1. Initialize FastAPI app in `api/app.py`.
+  2. Start the API locally:
+     ```bash
+     uvicorn api.app:app --host 0.0.0.0 --port 8000 --reload
+     ```
+  3. Query predictions via interactive docs: Open [http://localhost:8000/docs](http://localhost:8000/docs).
+* **Use‑Case**: Low-latency serving of recommendation results to frontend applications.
+
+### 2. Python
+* **Purpose**: Base programming language for pipeline scripts, data manipulation, and models.
+* **How to use it**:
+  1. Create a clean virtual environment:
+     ```bash
+     python -m venv venv
+     source venv/Scripts/activate  # On Windows: venv\Scripts\activate
+     ```
+  2. Install dependencies:
+     ```bash
+     pip install -r requirements.txt
+     ```
+* **Use‑Case**: Running data preparation, validation, engineering, and training steps.
+
+### 3. Scikit‑Learn / LightFM
+* **Purpose**: Collaborative filtering & Content-based algorithms.
+* **How to use it**:
+  1. Train models via training script:
+     ```bash
+     python src/model_training.py
+     ```
+  2. Persist model binary:
+     ```python
+     import joblib
+     joblib.dump(model, 'artifacts/model.pkl')
+     ```
+* **Use‑Case**: Building hybrid recommendation pipelines.
+
+### 4. MLflow
+* **Purpose**: Experiment tracking, metric visualization, and model registry.
+* **How to use it**:
+  1. Run a local MLflow UI dashboard:
+     ```bash
+     mlflow server --host 127.0.0.1 --port 5000
+     ```
+  2. Navigate to [http://127.0.0.1:5000](http://127.0.0.1:5000) to view metrics and parameter differences across runs.
+* **Use‑Case**: Comparing hyperparameters and registering model files.
+
+### 5. DVC (Data Version Control)
+* **Purpose**: Versioning dataset csv files and large model binaries without checking them into Git.
+* **How to use it**:
+  1. Initialize DVC:
+     ```bash
+     dvc init
+     ```
+  2. Track data changes:
+     ```bash
+     dvc add data/products.csv data/user_interactions.csv
+     ```
+  3. Git track the small metadata pointers:
+     ```bash
+     git add data/products.csv.dvc .gitignore
+     ```
+  4. Push datasets to configured S3 or local remote:
+     ```bash
+     dvc push
+     ```
+  5. Pull data onto a clean runner:
+     ```bash
+     dvc pull
+     ```
+* **Use‑Case**: Enforcing reproducibility in CI/CD environments.
+
+### 6. Docker
+* **Purpose**: Packaging runtime environments into immutable container images.
+* **How to use it**:
+  1. Build the production Docker image:
+     ```bash
+     docker build -t recommend-api:latest .
+     ```
+  2. Run container to verify:
+     ```bash
+     docker run -p 8000:8000 recommend-api:latest
+     ```
+* **Use‑Case**: Deploying identical runtimes locally, to EKS, and other staging systems.
+
+### 7. Kubernetes (kubectl)
+* **Purpose**: Cluster management and API deployments.
+* **How to use it**:
+  1. Deploy all services and configmaps:
+     ```bash
+     kubectl apply -f k8s/namespace.yaml
+     kubectl apply -f k8s/
+     ```
+  2. Check Deployment rollout status:
+     ```bash
+     kubectl rollout status deployment/recommendation-api -n recommendation
+     ```
+* **Use‑Case**: Highly-scalable hosting with rolling updates.
+
+### 8. KServe
+* **Purpose**: Serve raw pickle models with declarative YAML server wrappers.
+* **How to use it**:
+  1. Deploy Inference Service:
+     ```bash
+     kubectl apply -f kserve/inferenceservice.yaml
+     ```
+  2. Check status of model availability:
+     ```bash
+     kubectl get inferenceservice recommender -n recommendation
+     ```
+* **Use‑Case**: Serverless inference orchestration with request routing and scaling-to-zero.
+
+### 9. Kubeflow Pipelines (KFP)
+* **Purpose**: Orchestrating the end-to-end DAG (Directed Acyclic Graph) of ML workflows.
+* **How to use it**:
+  1. Define pipelines using python KFP SDK and compile:
+     ```bash
+     pip install kfp
+     python pipelines/training_pipeline.py --compile
+     ```
+  2. Upload `pipeline.yaml` to Kubeflow Dashboard.
+* **Use‑Case**: Automating scheduled retraining runs.
+
+### 10. GitHub Actions
+* **Purpose**: Continuous Integration & Deployment.
+* **How to use it**:
+  1. Configure workflow triggers inside `.github/workflows/main.yml`.
+  2. Set secrets (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, etc.) inside GitHub Repository Settings.
+  3. Git push triggers steps automatically.
+* **Use‑Case**: Automating unit tests, image builds, and deployments on git events.
+
+### 11. AWS EKS (Amazon Elastic Kubernetes Service)
+* **Purpose**: Managed container environment on AWS.
+* **How to use it**:
+  1. Link local context to remote cluster:
+     ```bash
+     aws eks update-kubeconfig --region us-east-1 --name cluster-name
+     ```
+  2. Check node health:
+     ```bash
+     kubectl get nodes
+     ```
+* **Use‑Case**: Production cloud-native server hosting.
+
+### 12. Prometheus
+* **Purpose**: Scrape time-series server metrics.
+* **How to use it**:
+  1. Launch Prometheus server:
+     ```bash
+     prometheus --config.file=monitoring/prometheus.yml
+     ```
+  2. Query server metrics at: [http://localhost:9090](http://localhost:9090).
+* **Use‑Case**: Alerts on request failures or server latency spikes.
+
+### 13. Grafana
+* **Purpose**: Dashboard visualization of system metrics.
+* **How to use it**:
+  1. Connect Prometheus datasource to Grafana.
+  2. Import panels using metric keys such as `api_requests_total`.
+* **Use‑Case**: Operational dashboards for monitoring real-time API traffic.
+
+### 14. Evidently AI
+* **Purpose**: Evaluate feature drift and model performance quality.
+* **How to use it**:
+  1. Run data/model drift monitoring script:
+     ```bash
+     python src/data_validation.py --drift-analysis
+     ```
+  2. Review generated HTML validation reports.
+* **Use‑Case**: Proactive alerts prior to model accuracy decay.
+
+### 15. Argo CD
+* **Purpose**: GitOps Continuous Delivery.
+* **How to use it**:
+  1. Apply Argo CD applications:
+     ```bash
+     kubectl apply -f argocd/install.yaml
+     ```
+  2. Monitor deployment updates via Argo CD UI dashboard.
+* **Use‑Case**: Declarative synchronisation of K8s resources with git repositories.
+
+---
 
 ## License
 
