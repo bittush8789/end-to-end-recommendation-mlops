@@ -1,0 +1,26 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: recommendation-model
+  namespace: recommendation
+  annotations:
+    autoscaling.knative.dev/minScale: "0"
+    autoscaling.knative.dev/maxScale: "10"
+spec:
+  predictor:
+    serviceAccountName: recommendation-sa
+    containers:
+    - name: kserve-container
+      image: <ECR_REPOSITORY>:<IMAGE_TAG>
+      resources:
+        limits:
+          cpu: "500m"
+          memory: "512Mi"
+        requests:
+          cpu: "250m"
+          memory: "256Mi"
+      env:
+        - name: MLFLOW_TRACKING_URI
+          value: http://mlflow-tracking:5000
+      ports:
+        - containerPort: 8000

@@ -3,5 +3,5 @@ kind: Namespace
 metadata:
   name: recommendation
   labels:
-    app.kubernetes.io/name: recommendation
-    app.kubernetes.io/managed-by: kubectl
+    app: recommendation
+    environment: production

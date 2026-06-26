@@ -19,13 +19,13 @@ In modern e-commerce, platforms face several key challenges that impact revenue 
 ### The ML-Powered Solution
 This platform addresses these commercial challenges through a **Hybrid Recommendation Engine**:
 - **Personalized Picks (Collaborative Filtering)**: Deconstructs historical user-item rating trends using Singular Value Decomposition (SVD). This maps similar user preferences to recommend items a user is highly likely to purchase, directly increasing **Conversion Rates**.
-- **Alternative Discoveries (Content-Based Filtering)**: Uses TF-IDF Vectorization and Cosine Similarity on product category and text details to show high-affinity alternatives. This prevents user drop-off on out-of-stock items and drives catalog exploration.
-- **Trending & High-Velocity Items**: Surfaces most viewed and best-selling products to new/unauthenticated users, resolving the cold-start problem and increasing immediate CTR.
+- **Alternative Discoveries (Content-Based Filtering)**: Uses TF-IDF Vectorization and Cosine Similarity on product category and text details to show high‑affinity alternatives. This prevents user drop‑off on out‑of‑stock items and drives catalog exploration.
+- **Trending & High‑Velocity Items**: Surfaces most viewed and best‑selling products to new/unauthenticated users, resolving the cold‑start problem and increasing immediate CTR.
 
 ### Expected Business Impact
-- **Average Order Value (AOV)**: Expected increase of **12-18%** through personalized cross-selling.
-- **Conversion Rate (CR)**: Expected uplift of **5-8%** by reducing browsing path friction.
-- **Click-Through Rate (CTR)**: Expected improvement of **20%** on homepage grids using hybrid model scoring.
+- **Average Order Value (AOV)**: Expected increase of **12‑18%** through personalized cross‑selling.
+- **Conversion Rate (CR)**: Expected uplift of **5‑8%** by reducing browsing path friction.
+- **Click‑Through Rate (CTR)**: Expected improvement of **20%** on homepage grids using hybrid model scoring.
 
 ---
 
@@ -41,7 +41,7 @@ ecommerce-recommendation-platform-mlops/
 ├── src/
 │   ├── data_ingestion.py           # Loads CSV files, generates mocks if missing
 │   ├── data_validation.py          # Verifies schema, duplicates, invalid values
-│   ├── feature_engineering.py      # Computes user & product metrics
+│   ├── feature_engineering.py      # Computes user \& product metrics
 │   ├── model_training.py           # Trains collaborative and content engines
 │   ├── model_evaluation.py         # Computes Precision@K, Recall@K, MAP, NDCG
 │   └── recommendation_engine.py    # Hybrid Recommendation Engine
@@ -53,7 +53,7 @@ ecommerce-recommendation-platform-mlops/
 │   └── prometheus.yml              # Prometheus configuration
 ├── pipelines/
 │   ├── training_pipeline.py        # Complete training orchestrator
-│   └── prediction_pipeline.py      # Predictor wrapper & search router
+│   └── prediction_pipeline.py      # Predictor wrapper \& search router
 ├── artifacts/                      # Houses model.pkl, evaluation reports
 ├── tests/
 │   └── test_pipelines.py           # Suite of unit tests
@@ -81,7 +81,7 @@ python pipelines/training_pipeline.py
 uvicorn api.app:app --host 0.0.0.0 --port 8000
 ```
 - **Unified Web UI Dashboard**: Visit [http://localhost:8000](http://localhost:8000)
-- **Interactive EDA Insights**: Select the **Data Insights (EDA)** tab to view real-time statistics.
+- **Interactive EDA Insights**: Select the **Data Insights (EDA)** tab to view real‑time statistics.
 - **REST API Endpoints**:
   - API Health Check: [http://localhost:8000/health](http://localhost:8000/health)
   - Interactive Swagger Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
@@ -92,8 +92,7 @@ uvicorn api.app:app --host 0.0.0.0 --port 8000
 - **Personalized Picks**: Select active users from **U001 to U100** to display hybrid recommendations instantly.
 - **Similarity Searches**: Click on any product card or trending row item to load alternative/similar items.
 - **Global Search**: Type inside the search bar to query products by name or category.
-- **Exploratory Data Analysis (EDA)**: Offers real-time summaries and charts showing ratings and category distributions.
-
+- **Exploratory Data Analysis (EDA)**: Offers real‑time summaries and charts showing ratings and category distributions.
 
 ## Docker Support
 
@@ -124,6 +123,28 @@ The `.github/workflows/main.yml` pipeline runs on every push to `main`:
 2. 📊 Data validation
 3. 🤖 Train model
 4. 🐳 Build Docker image
+
+## 🛠️ Tools & Step‑by‑Step Usage
+
+Below is a quick reference for each major tool used in this project and the commands you need to run locally.
+
+| Tool | Purpose | Quick Commands |
+|------|---------|----------------|
+| **FastAPI** | Serve recommendation API | `uvicorn api.app:app --host 0.0.0.0 --port 8000` |
+| **Python** | Core language | `pip install -r requirements.txt` |
+| **Scikit‑Learn / LightFM** | Model training & evaluation | `python pipelines/training_pipeline.py` |
+| **MLflow** | Experiment tracking & model registry | `mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root s3://my-mlflow-bucket` |
+| **DVC** | Data & model versioning | `dvc pull` → `dvc push` → `dvc repro` |
+| **Docker** | Containerise FastAPI service | `docker build -t ecommerce-recommendation .` |
+| **Kubernetes** | Deploy containers to EKS | `kubectl apply -f k8s/` |
+| **KServe** | Serve the trained model on K8s | `kubectl apply -f kserve/inferenceservice.yaml` |
+| **Kubeflow Pipelines** | Orchestrate training workflow | `pip install kfp && python kubeflow/pipeline.py` |
+| **GitHub Actions** | CI/CD automation | See `.github/workflows/main.yml` |
+| **AWS EKS** | Managed K8s cluster | `aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER` |
+| **Prometheus** | Metrics collection | `prometheus --config.file=monitoring/prometheus.yml` |
+| **Grafana** | Dashboard visualisation | Access Grafana service (LoadBalancer) |
+| **Evidently AI** | Data & model drift monitoring | `python src/model_monitoring.py` |
+| **Argo CD** | GitOps continuous delivery | `kubectl apply -f argocd/install.yaml` |
 
 ## License
 
