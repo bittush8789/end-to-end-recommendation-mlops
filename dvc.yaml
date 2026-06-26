@@ -16,42 +16,16 @@ stages:
     outs:
       - artifacts/validation_report.json
 
-  feature_engineering:
-    cmd: python src/feature_engineering.py
-    deps:
-      - src/feature_engineering.py
-      - data/user_interactions.csv
-      - data/products.csv
-    outs:
-      - data/features/user_features.csv
-      - data/features/product_features.csv
-
   train:
     cmd: python pipelines/training_pipeline.py
     deps:
       - pipelines/training_pipeline.py
       - src/recommendation_engine.py
       - src/model_training.py
-      - data/features/user_features.csv
-      - data/features/product_features.csv
-    params:
-      - params.yaml:
-          - train.n_components
-          - train.hybrid_weight
+      - data/products.csv
+      - data/user_interactions.csv
     outs:
       - artifacts/model.pkl
     metrics:
       - artifacts/evaluation_report.json:
-          cache: false
-
-  monitor:
-    cmd: python src/model_monitoring.py
-    deps:
-      - src/model_monitoring.py
-      - data/user_interactions.csv
-      - artifacts/model.pkl
-    outs:
-      - artifacts/monitoring/data_drift_report.json:
-          cache: false
-      - artifacts/monitoring/prediction_drift_report.json:
           cache: false
